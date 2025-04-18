@@ -1,0 +1,1 @@
+from techsync_cbf_api.main import app
