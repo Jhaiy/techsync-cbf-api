@@ -19,10 +19,10 @@ from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__)
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'techsync_db'
+app.config['MYSQL_HOST'] = 'sql12.freesqldatabase.com'
+app.config['MYSQL_USER'] = 'sql12774029'
+app.config['MYSQL_PASSWORD'] = 'WPIf4sUYbz'
+app.config['MYSQL_DB'] = 'sql12774029'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)
 
@@ -35,7 +35,7 @@ def process_role_description():
         SELECT company.CompanyName, joblistings.JobListingID, joblistings.JobTitle, joblistings.JobDescription, jobcategories.CategoryName, jobcategories.CategoryDescription, jobroles.RoleName, jobroles.RoleDescription
         FROM joblistings
         INNER JOIN jobcategories ON joblistings.JobCategoryID = jobcategories.JobCategoryID
-        INNER JOIN jobroles ON Joblistings.JobRoleID = jobroles.JobRoleID
+        INNER JOIN jobroles ON joblistings.JobRoleID = jobroles.JobRoleID
         INNER JOIN company ON joblistings.CompanyID = company.CompanyID
         WHERE joblistings.JobListingID
     """
