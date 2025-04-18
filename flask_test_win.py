@@ -35,7 +35,7 @@ engine = create_engine(f'mysql+pymysql://{db_username}:{db_password}@{db_host}/{
 
 @app.route('/', methods=['GET'])
 def process_role_description():
-    applicant_id = request.args.get('applicant_id', 12, type=int)
+    applicant_id = request.args.get('applicant_id', 10, type=int)
     fetch_job_skills = """
         SELECT company.CompanyName, joblistings.JobListingID, joblistings.JobTitle, joblistings.JobDescription, jobcategories.CategoryName, jobcategories.CategoryDescription, jobroles.RoleName, jobroles.RoleDescription
         FROM joblistings
