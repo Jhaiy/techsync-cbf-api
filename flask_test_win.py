@@ -1,4 +1,3 @@
-import os
 from flask import Flask, json, request, jsonify
 from flask_mysqldb import MySQL, MySQLdb
 from sqlalchemy import create_engine
@@ -51,24 +50,24 @@ def process_role_description():
     sql_cursor.execute(applicant_skills_query, (applicant_id,))
     applicant_skills = pd.DataFrame(sql_cursor.fetchall())
 
-    sql_cursor.execute(fetch_job_skills)
-    job_skills = pd.DataFrame(sql_cursor.fetchall())
-
-    category_description = job_skills[['CategoryName', 'CategoryDescription', 'JobListingID', 'CompanyName', 'JobTitle', 'JobDescription']].drop_duplicates(subset=['CategoryDescription'])
-    role_description = job_skills[['RoleName', 'RoleDescription', 'JobListingID']].drop_duplicates(subset=['RoleDescription'])
+    category_description = pd.read_sql(fetch_job_skills, con=engine)
 
     category_description = category_description.drop_duplicates(subset=['CategoryDescription'])
-    category_description['CategoryDescription'] = category_description['CategoryDescription'].str.lower()
-    category_description['CategoryDescription'] = category_description['CategoryDescription'].apply(lambda x: re.sub(r'[^a-zA-Z]', ' ', x))
-    category_description['CategoryDescription'] = category_description['CategoryDescription'].apply(lambda x: re.sub(r'\s+', ' ', x))
+    category_description['CombinedDescription'] = (
+        category_description['CategoryDescription'].str.lower() + ' ' +
+        category_description['RoleDescription'].str.lower()
 
-    role_description = role_description.drop_duplicates(subset=['RoleDescription'])
-    role_description['RoleDescription'] = role_description['RoleDescription'].str.lower()
-    role_description['RoleDescription'] = role_description['RoleDescription'].apply(lambda x: re.sub(r'[^a-zA-Z]', ' ', x))
-    role_description['RoleDescription'] = role_description['RoleDescription'].apply(lambda x: re.sub(r'\s+', ' ', x))
+    )
+    category_description['CombinedDescription'] = category_description['CombinedDescription'].apply(
+        lambda x: re.sub(r'[^a-zA-Z]', ' ', x)
+    )
+
+    category_description['CombinedDescription'] = category_description['CombinedDescription'].apply(
+        lambda x: re.sub(r'\s+', ' ', x)
+    )
 
     stop_words = nltk.corpus.stopwords.words('english')
-    category_description['CategoryDescription'] = category_description['CategoryDescription'].apply(
+    category_description['CombinedDescription'] = category_description['CombinedDescription'].apply(
         lambda x: ' '.join([word for word in nltk.word_tokenize(x) if word not in stop_words ])
     )
 
@@ -79,7 +78,7 @@ def process_role_description():
     combined_skills = re.sub(r'\s+', ' ', combined_skills).strip()
 
     tfidf = TfidfVectorizer()
-    features = tfidf.fit_transform(category_description['CategoryDescription'])
+    features = tfidf.fit_transform(category_description['CombinedDescription'])
     applicant_skill_features = tfidf.transform([combined_skills])
 
     category_similarity_scores = cosine_similarity(applicant_skill_features, features).flatten()
@@ -104,6 +103,9 @@ def process_role_description():
                 "JobDescription": category_description['JobDescription'].iloc[idx],
                 "CategoryDescription": category_description['CategoryDescription'].iloc[idx],
                 "CategoryName": category_description['CategoryName'].iloc[idx],
+                "RoleDescription": category_description['RoleDescription'].iloc[idx],
+                "RoleName": category_description['RoleName'].iloc[idx],
+                "SimilarityScore": float(score)
             }
             for idx, score, in top_similar_skills
         ]
