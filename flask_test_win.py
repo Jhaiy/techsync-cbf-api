@@ -1,3 +1,4 @@
+import os
 from flask import Flask, json, request, jsonify
 from flask_mysqldb import MySQL, MySQLdb
 from sqlalchemy import create_engine
