@@ -1,1 +1,1 @@
-from flask-test-win import app
+from flask_test_win import app
