@@ -27,16 +27,7 @@ app.config['MYSQL_DB'] = 'sql12774029'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)
 
-<<<<<<< Updated upstream
-db_username = os.getenv('DB_USERNAME', 'sql12774029')
-db_password = os.getenv('DB_PASSWORD', 'WPIf4sUYbz')
-db_host = os.getenv('DB_HOST', 'sql12.freesqldatabase.com')
-db_name = os.getenv('DB_NAME', 'sql12774029')
-
-engine = create_engine(f'mysql+pymysql://{db_username}:{db_password}@{db_host}/{db_name}')
-=======
 engine = create_engine('mysql+pymysql://sql12774029:WPIf4sUYbz@sql12.freesqldatabase.com/sql12774029')
->>>>>>> Stashed changes
 
 @app.route('/', methods=['GET'])
 def process_role_description():
