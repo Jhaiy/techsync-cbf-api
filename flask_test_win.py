@@ -27,12 +27,16 @@ app.config['MYSQL_DB'] = 'sql12774029'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)
 
+<<<<<<< Updated upstream
 db_username = os.getenv('DB_USERNAME', 'sql12774029')
 db_password = os.getenv('DB_PASSWORD', 'WPIf4sUYbz')
 db_host = os.getenv('DB_HOST', 'sql12.freesqldatabase.com')
 db_name = os.getenv('DB_NAME', 'sql12774029')
 
 engine = create_engine(f'mysql+pymysql://{db_username}:{db_password}@{db_host}/{db_name}')
+=======
+engine = create_engine('mysql+pymysql://sql12774029:WPIf4sUYbz@sql12.freesqldatabase.com/sql12774029')
+>>>>>>> Stashed changes
 
 @app.route('/', methods=['GET'])
 def process_role_description():
@@ -72,11 +76,6 @@ def process_role_description():
     role_description['RoleDescription'] = role_description['RoleDescription'].apply(lambda x: re.sub(r'[^a-zA-Z]', ' ', x))
     role_description['RoleDescription'] = role_description['RoleDescription'].apply(lambda x: re.sub(r'\s+', ' ', x))
 
-    role_stop_words = nltk.corpus.stopwords.words('english')
-    role_description['RoleDescription'] = role_description['RoleDescription'].apply(
-        lambda x: ' '.join([word for word in nltk.word_tokenize(x) if word not in role_stop_words ])
-    )
-
     stop_words = nltk.corpus.stopwords.words('english')
     category_description['CategoryDescription'] = category_description['CategoryDescription'].apply(
         lambda x: ' '.join([word for word in nltk.word_tokenize(x) if word not in stop_words ])
@@ -90,15 +89,12 @@ def process_role_description():
 
     tfidf = TfidfVectorizer()
     features = tfidf.fit_transform(category_description['CategoryDescription'])
-    role_features = tfidf.fit_transform(role_description['RoleDescription'])
     applicant_skill_features = tfidf.transform([combined_skills])
 
     category_similarity_scores = cosine_similarity(applicant_skill_features, features).flatten()
-    role_similarity_scores = cosine_similarity(applicant_skill_features, role_features).flatten()
-    combined_similarity_scores = (category_similarity_scores + role_similarity_scores) / 2
 
     top_similar_skills = sorted(
-        [(idx, score) for idx, score in enumerate(combined_similarity_scores) if score > 0.0],
+        [(idx, score) for idx, score in enumerate(category_similarity_scores) if score > 0.0],
         key=lambda x: x[1], 
         reverse=True
     )[:10]
@@ -117,9 +113,6 @@ def process_role_description():
                 "JobDescription": category_description['JobDescription'].iloc[idx],
                 "CategoryDescription": category_description['CategoryDescription'].iloc[idx],
                 "CategoryName": category_description['CategoryName'].iloc[idx],
-                "RoleDescription": role_description['RoleDescription'].iloc[idx],
-                "RoleName": role_description['RoleName'].iloc[idx],
-                "SimilarityScore": score
             }
             for idx, score, in top_similar_skills
         ]
