@@ -56,8 +56,9 @@ def process_role_description():
     sql_cursor.execute(applicant_skills_query, (applicant_id,))
     applicant_skills = pd.DataFrame(sql_cursor.fetchall())
 
-    category_description = pd.read_sql(fetch_job_skills, con=engine)
-    role_description = pd.read_sql(fetch_job_skills, con=engine)
+    sql_cursor.execute(fetch_job_skills)
+    category_description = pd.DataFrame(sql_cursor.fetchall())
+    role_description = pd.read_sql(sql_cursor.fetchall())
 
     category_description = category_description.drop_duplicates(subset=['CategoryDescription'])
     category_description['CategoryDescription'] = category_description['CategoryDescription'].str.lower()
