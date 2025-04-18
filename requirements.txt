@@ -9,4 +9,3 @@ scipy
 SQLAlchemy
 PyMySQL
 gunicorn
-os
