@@ -1,1 +1,1 @@
-from techsync-cbf-api.main import app
+from techsync-cbf-api import app
