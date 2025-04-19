@@ -37,7 +37,6 @@ def process_role_description():
         INNER JOIN jobcategories ON joblistings.JobCategoryID = jobcategories.JobCategoryID
         INNER JOIN jobroles ON joblistings.JobRoleID = jobroles.JobRoleID
         INNER JOIN company ON joblistings.CompanyID = company.CompanyID
-        WHERE joblistings.JobListingID
     """
     applicant_skills_query = """
         SELECT applicantskills.ApplicantID, skills.SkillName, skills.SkillDescription
@@ -51,31 +50,32 @@ def process_role_description():
     applicant_skills = pd.DataFrame(sql_cursor.fetchall())
 
     category_description = pd.read_sql(fetch_job_skills, con=engine)
+    category_description['CategoryDescription'] = category_description['CategoryDescription'].str.lower()
+    category_description['CategoryDescription'] = category_description['CategoryDescription'].apply(lambda x: re.sub(r'[^a-zA-Z]', ' ', x))
+    category_description['CategoryDescription'] = category_description['CategoryDescription'].apply(lambda x: re.sub(r'\s+', ' ', x))
 
-    category_description = category_description.drop_duplicates(subset=['CategoryDescription'])
-    category_description['CombinedDescription'] = (
-        category_description['CategoryDescription'].str.lower() + ' ' +
-        category_description['RoleDescription'].str.lower()
-
-    )
-    category_description['CombinedDescription'] = category_description['CombinedDescription'].apply(
-        lambda x: re.sub(r'[^a-zA-Z]', ' ', x)
-    )
-
-    category_description['CombinedDescription'] = category_description['CombinedDescription'].apply(
-        lambda x: re.sub(r'\s+', ' ', x)
-    )
+    category_description['RoleDescription'] = category_description['RoleDescription'].str.lower()
+    category_description['RoleDescription'] = category_description['RoleDescription'].apply(lambda x: re.sub(r'[^a-zA-Z]', ' ', x))
+    category_description['RoleDescription'] = category_description['RoleDescription'].apply(lambda x: re.sub(r'\s+', ' ', x))
 
     stop_words = nltk.corpus.stopwords.words('english')
-    category_description['CombinedDescription'] = category_description['CombinedDescription'].apply(
+    category_description['CategoryDescription'] = category_description['CategoryDescription'].apply(
         lambda x: ' '.join([word for word in nltk.word_tokenize(x) if word not in stop_words ])
+    )
+    category_description['RoleDescription'] = category_description['RoleDescription'].apply(
+        lambda x: ' '.join([word for word in nltk.word_tokenize(x) if word not in stop_words])
+    )
+
+    category_description['CombinedDescription'] = (
+        category_description['CategoryDescription'] + ' ' + category_description['RoleDescription']
     )
 
     applicant_skills_filtered = applicant_skills[applicant_skills['ApplicantID'] == applicant_id]
-
     combined_skills = ' '.join(applicant_skills_filtered['SkillDescription'].str.lower().tolist())
     combined_skills = re.sub(r'[^a-zA-Z]', ' ', combined_skills)
     combined_skills = re.sub(r'\s+', ' ', combined_skills).strip()
+    combined_skills_tokens = [word for word in nltk.word_tokenize(combined_skills) if word not in stop_words]
+    combined_skills = ' '.join(combined_skills_tokens)
 
     tfidf = TfidfVectorizer()
     features = tfidf.fit_transform(category_description['CombinedDescription'])
@@ -83,11 +83,10 @@ def process_role_description():
 
     category_similarity_scores = cosine_similarity(applicant_skill_features, features).flatten()
 
-    top_similar_skills = sorted(
-        [(idx, score) for idx, score in enumerate(category_similarity_scores) if score > 0.0],
-        key=lambda x: x[1], 
-        reverse=True
-    )[:10]
+    top_similar_skills = [
+        (idx, score) for idx, score in sorted(enumerate(category_similarity_scores), key=lambda x: x[1], reverse=True)
+        if score > 0
+    ][:10]
 
     if not top_similar_skills:
         return jsonify({"message": "No recommendations found."}), 404
