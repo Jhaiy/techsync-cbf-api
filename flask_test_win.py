@@ -32,14 +32,14 @@ engine = create_engine('mysql+pymysql://sql12774029:WPIf4sUYbz@sql12.freesqldata
 def process_role_description():
     applicant_id = request.args.get('applicant_id', 10, type=int)
     fetch_job_skills = """
-        SELECT company.CompanyName, joblistings.JobListingID, joblistings.JobTitle, joblistings.JobDescription, jobcategories.CategoryName, jobcategories.CategoryDescription, jobroles.RoleName, jobroles.RoleDescription
+        SELECT DISTINCT company.CompanyName, joblistings.JobListingID, joblistings.JobTitle, joblistings.JobDescription, jobcategories.CategoryName, jobcategories.CategoryDescription, jobroles.RoleName, jobroles.RoleDescription
         FROM joblistings
         INNER JOIN jobcategories ON joblistings.JobCategoryID = jobcategories.JobCategoryID
         INNER JOIN jobroles ON joblistings.JobRoleID = jobroles.JobRoleID
         INNER JOIN company ON joblistings.CompanyID = company.CompanyID
     """
     applicant_skills_query = """
-        SELECT applicantskills.ApplicantID, skills.SkillName, skills.SkillDescription
+        SELECT DISTINCT applicantskills.ApplicantID, skills.SkillName, skills.SkillDescription
         FROM applicantskills
         INNER JOIN skills ON applicantskills.SkillID = skills.SkillID 
         WHERE applicantskills.ApplicantID = %s
